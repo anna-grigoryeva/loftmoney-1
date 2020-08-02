@@ -12,26 +12,42 @@
         android:layout_marginBottom="61dp"
         android:orientation="vertical">
 
-        <EditText
-            android:id="@+id/name_edittext"
+        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/edittext_name_hint"/>
+            android:hint="@string/edittext_name_hint">
+            
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/name_edittext"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+            
+        </com.google.android.material.textfield.TextInputLayout>
 
-        <EditText
+        <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="@string/edittext_price_hint">
+
+        <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/value_edittext"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="@string/edittext_price_hint"/>
+            android:inputType="numberDecimal"
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
 
     </LinearLayout>
 
     <Button
         android:id="@+id/add_button"
-        android:drawableStart="@drawable/ic_baseline_check_24"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/add_button_title"
+        android:enabled="false"
+        android:drawableStart="@drawable/check_selector"
+        android:textColor="@color/add_button_text_color_selector"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
         android:background="@null"/>

@@ -6,4 +6,6 @@
     <string name="expenses">Расходы</string>
     <string name="income">Доходы</string>
     <string name="price_with_currency">%1$s ₽</string>
+    <string name="activity_main_toolbar_title">Учет бюджета</string>
+    <string name="login">Войти</string>
 </resources>

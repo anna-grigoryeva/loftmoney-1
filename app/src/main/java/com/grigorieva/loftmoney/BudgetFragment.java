@@ -3,27 +3,56 @@ package com.grigorieva.loftmoney;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
+import retrofit2.Call;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.grigorieva.loftmoney.cells.money.MoneyAdapter;
 import com.grigorieva.loftmoney.cells.money.MoneyCellModel;
+import com.grigorieva.loftmoney.remote.MoneyApi;
+import com.grigorieva.loftmoney.remote.MoneyItem;
+import com.grigorieva.loftmoney.remote.MoneyResponse;
 
 import java.util.List;
+
+import retrofit2.Callback;
+import retrofit2.Response;
 
 
 public class BudgetFragment extends Fragment {
 
-    RecyclerView recyclerView;
-    private static final int REQUEST_CODE = 100;
+    public static final int REQUEST_CODE = 100;
+    private static final String COLOR_ID = "colorId";
+    private static final String TYPE = "fragmentType";
+
     private MoneyAdapter moneyAdapter;
+    private SwipeRefreshLayout swipeRefreshLayout;
+
+    private MoneyApi moneyApi;
+
+    public static BudgetFragment newInstance(final int colorId, final String type) {
+        BudgetFragment budgetFragment = new BudgetFragment();
+        Bundle bundle = new Bundle();
+        bundle.putInt(COLOR_ID, colorId);
+        bundle.putString(TYPE, type);
+        budgetFragment.setArguments(bundle);
+        return budgetFragment;
+    }
+
+    @Override
+    public void onCreate(@Nullable final Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        moneyApi = ((LoftApp)getActivity().getApplication()).getMoneyApi();
+        loadItems();
+    }
 
     @Nullable
     @Override
@@ -34,22 +63,16 @@ public class BudgetFragment extends Fragment {
     ) {
         View view = inflater.inflate(R.layout.fragment_budget, null);
 
-        Button callAddButton = view.findViewById(R.id.call_add_item_activity);
-        callAddButton.setOnClickListener(new View.OnClickListener() {
+        RecyclerView recyclerView = view.findViewById(R.id.budget_item_list);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
-            public void onClick(final View v) {
-                startActivityForResult(new Intent(getActivity(), AddItemActivity.class),
-                        REQUEST_CODE);
+            public void onRefresh() {
+                loadItems();
             }
         });
 
-        recyclerView = view.findViewById(R.id.budget_item_list);
-        moneyAdapter = new MoneyAdapter();
+        moneyAdapter = new MoneyAdapter(getArguments().getInt(COLOR_ID));
         recyclerView.setAdapter(moneyAdapter);
-
-        moneyAdapter.addData(new MoneyCellModel("Молоко", 70));
-        moneyAdapter.addData(new MoneyCellModel("Зубная щетка", 70));
-        moneyAdapter.addData((new MoneyCellModel("Сковородка с антипригарным покрытием", 1670)));
 
         return view;
     }
@@ -65,8 +88,54 @@ public class BudgetFragment extends Fragment {
         } catch (NumberFormatException e) {
             value = 0;
         }
+        final int realValue = value;
         if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            moneyAdapter.addData(new MoneyCellModel(data.getStringExtra("name"), value));
+            final String name = data.getStringExtra("name");
+
+            final String token = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(MainActivity.TOKEN, "");
+
+            Call<MoneyResponse> call = moneyApi.addItem(new MoneyItem(name, getArguments().getString(TYPE), value), token);
+            call.enqueue(new Callback<MoneyResponse>() {
+
+                @Override
+                public void onResponse(
+                        final Call<MoneyResponse> call, final Response<MoneyResponse> response
+                ) {
+                    if (response.body().getStatus().equals("success")) {
+                        moneyAdapter.addData(new MoneyCellModel(name, realValue));
+                    }
+                }
+
+                @Override
+                public void onFailure(final Call<MoneyResponse> call, final Throwable t) {
+                    t.printStackTrace();
+                }
+            });
+
         }
     }
-}
+
+    public void loadItems() {
+        final String token = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(MainActivity.TOKEN, "");
+
+        Call<List<MoneyCellModel>> moneyCellModels = moneyApi.getItems(getArguments().getString(TYPE), token);
+        moneyCellModels.enqueue(new Callback<List<MoneyCellModel>>() {
+
+            @Override
+            public void onResponse(
+                    final Call<List<MoneyCellModel>> call, final Response<List<MoneyCellModel>> response
+            ) {
+                moneyAdapter.clearItems();
+                swipeRefreshLayout.setRefreshing(false);
+                List<MoneyCellModel> moneyCellModels = response.body();
+                for (MoneyCellModel moneyCellModel : moneyCellModels) {
+                    moneyAdapter.addData(moneyCellModel);
+                }
+            }
+
+            @Override
+            public void onFailure(final Call<List<MoneyCellModel>> call, final Throwable t) {
+                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
+    }}
