@@ -17,9 +17,9 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.grigorieva.loftmoney.cells.money.MoneyAdapter;
 import com.grigorieva.loftmoney.cells.money.MoneyCellModel;
+import com.grigorieva.loftmoney.remote.AuthResponse;
 import com.grigorieva.loftmoney.remote.MoneyApi;
 import com.grigorieva.loftmoney.remote.MoneyItem;
-import com.grigorieva.loftmoney.remote.MoneyResponse;
 
 import java.util.List;
 
@@ -64,6 +64,7 @@ public class BudgetFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_budget, null);
 
         RecyclerView recyclerView = view.findViewById(R.id.budget_item_list);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh_layout);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
@@ -82,6 +83,8 @@ public class BudgetFragment extends Fragment {
             final int requestCode, final int resultCode, @Nullable final Intent data
     ) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
         int value;
         try {
             value = Integer.parseInt(data.getStringExtra("value"));
@@ -89,25 +92,24 @@ public class BudgetFragment extends Fragment {
             value = 0;
         }
         final int realValue = value;
-        if (requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK) {
-            final String name = data.getStringExtra("name");
+        final String name = data.getStringExtra("name");
 
-            final String token = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(MainActivity.TOKEN, "");
+        final String token = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(MainActivity.TOKEN, "");
 
-            Call<MoneyResponse> call = moneyApi.addItem(new MoneyItem(name, getArguments().getString(TYPE), value), token);
-            call.enqueue(new Callback<MoneyResponse>() {
+        Call<AuthResponse> call = moneyApi.addItem(new MoneyItem(name, getArguments().getString(TYPE), value), token);
+        call.enqueue(new Callback<AuthResponse>() {
 
                 @Override
                 public void onResponse(
-                        final Call<MoneyResponse> call, final Response<MoneyResponse> response
+                        final Call<AuthResponse> call, final Response<AuthResponse> response
                 ) {
                     if (response.body().getStatus().equals("success")) {
-                        moneyAdapter.addData(new MoneyCellModel(name, realValue));
+                        loadItems();
                     }
                 }
 
                 @Override
-                public void onFailure(final Call<MoneyResponse> call, final Throwable t) {
+                public void onFailure(final Call<AuthResponse> call, final Throwable t) {
                     t.printStackTrace();
                 }
             });
@@ -118,7 +120,7 @@ public class BudgetFragment extends Fragment {
     public void loadItems() {
         final String token = PreferenceManager.getDefaultSharedPreferences(getContext()).getString(MainActivity.TOKEN, "");
 
-        Call<List<MoneyCellModel>> moneyCellModels = moneyApi.getItems(getArguments().getString(TYPE), token);
+        final Call<List<MoneyCellModel>> moneyCellModels = moneyApi.getItems(getArguments().getString(TYPE), token);
         moneyCellModels.enqueue(new Callback<List<MoneyCellModel>>() {
 
             @Override

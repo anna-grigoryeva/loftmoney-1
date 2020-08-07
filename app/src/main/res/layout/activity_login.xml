@@ -6,8 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorPrimary"
-    android:gravity="center"
-    >
+    android:gravity="center">
 
     <ImageView
         android:layout_width="wrap_content"
@@ -22,7 +21,7 @@
         android:layout_marginBottom="32dp"
         style="@style/TextStyle"/>
 
-    <com.google.android.material.button.MaterialButton
+    <androidx.appcompat.widget.AppCompatButton
         android:id="@+id/login_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"

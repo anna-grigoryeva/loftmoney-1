@@ -12,12 +12,9 @@ import retrofit2.http.Query;
 
 public interface MoneyApi {
 
-    @GET("auth")
-    Call<MoneyResponse> auth(@Query("social_user_id") String userId);
-
     @GET("items")
     Call<List<MoneyCellModel>> getItems(@Query("type") String type, @Query("auth-token") String token);
 
     @POST("items/add")
-    Call<MoneyResponse> addItem(@Body MoneyItem request, @Query("auth-token") String token);
+    Call<AuthResponse> addItem(@Body MoneyItem request, @Query("auth-token") String token);
 }

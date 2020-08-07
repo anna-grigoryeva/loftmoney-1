@@ -2,7 +2,8 @@ package com.grigorieva.loftmoney.remote;
 
 import com.google.gson.annotations.SerializedName;
 
-public class MoneyResponse {
+public class AuthResponse {
+
     private String status;
 
     private int id;
